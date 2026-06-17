@@ -1,11 +1,20 @@
 <template>
   <div class="section">
     <div class="container">
-      <h1 class="title is-2 has-text-centered mb-6 current-title">🧪 Rick & Morty Characters</h1>
+      <h1 class="title is-2 has-text-centered mb-5 current-title">🧪 Rick & Morty Characters</h1>
+
+      <SearchBar @search="handleSearch" />
 
       <transition name="fade" mode="out-in">
         <div v-if="loading" class="has-text-centered my-6" key="loading">
           <button class="button is-loading is-large is-ghost text-loading">Loading characters...</button>
+        </div>
+
+        <div v-else-if="errorState" class="has-text-centered my-6" key="error">
+          <div class="notification is-warning is-light py-5 px-6 error-box">
+            <p class="title is-4 mb-2">🤷‍♂️ No characters found</p>
+            <p class="subtitle is-6">We couldn't find any characters matching your search criteria. Try another name!</p>
+          </div>
         </div>
 
         <div v-else class="columns is-multiline" key="content">
@@ -42,7 +51,7 @@
       </transition>
 
       <PaginationBar 
-        v-if="totalPages > 1"
+        v-if="totalPages > 1 && !errorState"
         :current-page="currentPage" 
         :total-pages="totalPages" 
         @page-change="handlePageChange"
@@ -55,6 +64,7 @@
 import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import PaginationBar from '../components/PaginationBar.vue';
+import SearchBar from '../components/SearchBar.vue'; // Importing search bar
 
 const route = useRoute();
 const router = useRouter();
@@ -62,29 +72,64 @@ const router = useRouter();
 const characters = ref([]);
 const totalPages = ref(1);
 const currentPage = ref(Number(route.query.page) || 1);
+const searchQuery = ref(route.query.name || ''); // Track the name query string
 const loading = ref(false);
+const errorState = ref(false); // Track if API returns 404 empty state
 
-const fetchCharacters = async (page) => {
+// Fetch data from API supporting both page and name parameters
+const fetchCharacters = async (page, name) => {
   loading.value = true;
+  errorState.value = false;
   try {
-    const response = await fetch(`https://rickandmortyapi.com/api/character?page=${page}`);
+    let url = `https://rickandmortyapi.com/api/character?page=${page}`;
+    if (name) {
+      url += `&name=${encodeURIComponent(name)}`;
+    }
+
+    const response = await fetch(url);
+    
+    // Handling API 404 gracefully without crashing
+    if (response.status === 404) {
+      characters.value = [];
+      totalPages.value = 1;
+      errorState.value = true;
+      return;
+    }
+
     const data = await response.json();
     characters.value = data.results;
     totalPages.value = data.info.pages;
   } catch (error) {
     console.error('My API Fetch Error:', error);
+    errorState.value = true;
   } finally {
     loading.value = false;
   }
 };
 
+// Handle pagination updates
 const handlePageChange = (newPage) => {
   currentPage.value = newPage;
-  router.push({ query: { page: newPage } });
+  updateUrlAndFetch();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-// Функция-заглушка: если картинка не загрузилась с сервера, ставим стандартный аватар placeholder
+// Handle explicit search button clicks / enter keys
+const handleSearch = (query) => {
+  searchQuery.value = query;
+  currentPage.value = 1; // Requirement: Reset to page 1 on every new search
+  updateUrlAndFetch();
+};
+
+// Synchronize state with Vue Router URL
+const updateUrlAndFetch = () => {
+  const queryParams = { page: currentPage.value };
+  if (searchQuery.value) {
+    queryParams.name = searchQuery.value;
+  }
+  router.push({ query: queryParams });
+};
+
 const handleImageError = (event) => {
   event.target.src = 'https://dummyimage.com/300x300/cbd5e1/555555.png&text=No+Image';
 };
@@ -95,14 +140,15 @@ const statusClass = (status) => {
   return 'is-dark';
 };
 
-watch(() => route.query.page, (newPage) => {
-  const pageNum = Number(newPage) || 1;
-  currentPage.value = pageNum;
-  fetchCharacters(pageNum);
-});
+// Watch for browser back/forward buttons navigation
+watch(() => route.query, (newQuery) => {
+  currentPage.value = Number(newQuery.page) || 1;
+  searchQuery.value = newQuery.name || '';
+  fetchCharacters(currentPage.value, searchQuery.value);
+}, { deep: true });
 
 onMounted(() => {
-  fetchCharacters(currentPage.value);
+  fetchCharacters(currentPage.value, searchQuery.value);
 });
 </script>
 
@@ -110,6 +156,13 @@ onMounted(() => {
 .current-title {
   color: #0f172a !important;
   font-weight: 800;
+}
+
+.error-box {
+  border: 1px solid #fde047;
+  border-radius: 8px;
+  max-width: 500px;
+  margin: 2rem auto;
 }
 
 .character-card {
@@ -130,18 +183,17 @@ onMounted(() => {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
-/* Новый жесткий контейнер для изображений */
 .character-image-container {
   width: 100%;
-  height: 250px; /* Фиксированная высота для всех картинок на сетке */
-  background-color: #f1f5f9; /* Серый фон-заглушка пока картинка грузится */
+  height: 250px;
+  background-color: #f1f5f9;
   overflow: hidden;
 }
 
 .character-img {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Картинка заполняет область без искажения пропорций */
+  object-fit: cover;
   display: block;
 }
 
