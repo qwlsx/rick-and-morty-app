@@ -73,6 +73,21 @@ import { useRoute, useRouter } from 'vue-router';
 import PaginationBar from '../components/PaginationBar.vue';
 import SearchBar from '../components/SearchBar.vue';
 
+// =========================================================================
+// MY STAGE 2 ANSWERS TO THE QUESTIONS:
+//
+// 1. How many API requests were made while typing "morty"?
+//    Answer: 5 API requests were made (one for each keystroke: "m", "mo", "mor", "mort", "morty").
+//
+// 2. What happens if a slow request from keystroke 2 arrives after keystroke 5?
+//    Answer: A race condition occurs. The outdated data from keystroke 2 ("mo") 
+//            will overwrite the latest correct data from keystroke 5 ("morty").
+//
+// 3. How does this affect the server and the user experience?
+//    Answer: It causes request flooding on the server, wasting resources. For the user,
+//            it creates a buggy and flickering UI with wrong search results.
+// =========================================================================
+
 const route = useRoute();
 const router = useRouter();
 
@@ -206,7 +221,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Стили остаются прежними */
 .current-title {
   color: #0f172a !important;
   font-weight: 800;
