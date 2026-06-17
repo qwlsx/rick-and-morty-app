@@ -64,7 +64,22 @@
 import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import PaginationBar from '../components/PaginationBar.vue';
-import SearchBar from '../components/SearchBar.vue'; // Importing search bar
+import SearchBar from '../components/SearchBar.vue';
+
+// ==========================================
+// STAGE 2 QUESTIONS AND ANSWERS (MY ANSWERS):
+// 
+// 1. How many API requests were made while typing "morty"?
+//    Answer: 5 requests were made (one for each letter: "m", "mo", "mor", "mort", "morty").
+// 
+// 2. What happens if a slow request from keystroke 2 arrives after keystroke 5?
+//    Answer: The app will experience a race condition. The UI will overwrite the correct "morty" 
+//            results with the outdated "mo" results, displaying wrong data to the user.
+// 
+// 3. How does this affect the server and the user experience?
+//    Answer: It causes server request flooding (wasting network bandwidth and server resources). 
+//            For the user, it creates an unstable UI with flickering data due to unexpected response orders.
+// ==========================================
 
 const route = useRoute();
 const router = useRouter();
@@ -72,11 +87,11 @@ const router = useRouter();
 const characters = ref([]);
 const totalPages = ref(1);
 const currentPage = ref(Number(route.query.page) || 1);
-const searchQuery = ref(route.query.name || ''); // Track the name query string
+const searchQuery = ref(route.query.name || '');
 const loading = ref(false);
-const errorState = ref(false); // Track if API returns 404 empty state
+const errorState = ref(false);
 
-// Fetch data from API supporting both page and name parameters
+// My function to fetch data from the API
 const fetchCharacters = async (page, name) => {
   loading.value = true;
   errorState.value = false;
@@ -88,7 +103,6 @@ const fetchCharacters = async (page, name) => {
 
     const response = await fetch(url);
     
-    // Handling API 404 gracefully without crashing
     if (response.status === 404) {
       characters.value = [];
       totalPages.value = 1;
@@ -107,21 +121,21 @@ const fetchCharacters = async (page, name) => {
   }
 };
 
-// Handle pagination updates
+// I handle pagination page switches here
 const handlePageChange = (newPage) => {
   currentPage.value = newPage;
   updateUrlAndFetch();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-// Handle explicit search button clicks / enter keys
+// I handle real-time keystroke searches here from Stage 2
 const handleSearch = (query) => {
   searchQuery.value = query;
-  currentPage.value = 1; // Requirement: Reset to page 1 on every new search
+  currentPage.value = 1; // I reset pagination to page 1 on every new input change
   updateUrlAndFetch();
 };
 
-// Synchronize state with Vue Router URL
+// My helper to keep my app state in sync with the router URL string
 const updateUrlAndFetch = () => {
   const queryParams = { page: currentPage.value };
   if (searchQuery.value) {
@@ -140,7 +154,7 @@ const statusClass = (status) => {
   return 'is-dark';
 };
 
-// Watch for browser back/forward buttons navigation
+// I am watching the route query parameters to trigger data re-fetching
 watch(() => route.query, (newQuery) => {
   currentPage.value = Number(newQuery.page) || 1;
   searchQuery.value = newQuery.name || '';
@@ -157,14 +171,12 @@ onMounted(() => {
   color: #0f172a !important;
   font-weight: 800;
 }
-
 .error-box {
   border: 1px solid #fde047;
   border-radius: 8px;
   max-width: 500px;
   margin: 2rem auto;
 }
-
 .character-card {
   height: 100%;
   display: flex;
@@ -177,26 +189,22 @@ onMounted(() => {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   background-color: #ffffff;
 }
-
 .character-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
-
 .character-image-container {
   width: 100%;
   height: 250px;
   background-color: #f1f5f9;
   overflow: hidden;
 }
-
 .character-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
-
 .my-custom-content {
   padding: 1.25rem !important;
   display: flex !important;
@@ -204,7 +212,6 @@ onMounted(() => {
   gap: 12px !important;
   background-color: #ffffff !important;
 }
-
 .character-name-block {
   font-size: 1.3rem !important;
   font-weight: 800 !important;
@@ -213,29 +220,24 @@ onMounted(() => {
   display: block !important;
   word-break: break-word !important;
 }
-
 .character-details-block {
   display: flex !important;
   align-items: center !important;
   flex-wrap: wrap !important;
   gap: 6px !important;
 }
-
 .species-text {
   font-weight: 600 !important;
   color: #475569 !important;
   font-size: 0.95rem !important;
 }
-
 .status-tag {
   font-weight: 700 !important;
 }
-
 .text-loading {
   color: #0f172a !important;
   font-weight: 700;
 }
-
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;
