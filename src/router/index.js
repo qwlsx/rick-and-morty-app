@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
-// I am importing my buttons example page
+// I am importing my pages here
 import ButtonsView from '../pages/ButtonsView.vue';
+import RickAndMortyView from '../pages/RickAndMortyView.vue';
 
 // I define my application routes here
 const routes = [
@@ -8,6 +9,11 @@ const routes = [
     path: '/',
     name: 'buttons-example',
     component: ButtonsView
+  },
+  {
+    path: '/characters',
+    name: 'rick-morty',
+    component: RickAndMortyView
   }
 ];
 

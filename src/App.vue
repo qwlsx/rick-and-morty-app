@@ -5,9 +5,10 @@
         <div class="navbar-brand">
           <span class="navbar-item title is-4 has-text-white mb-0">Rick & Morty App</span>
         </div>
-        <div class="navbar-menu">
+        <div class="navbar-menu is-active">
           <div class="navbar-start">
             <router-link to="/" class="navbar-item">Buttons Example</router-link>
+            <router-link to="/characters" class="navbar-item">Characters & Pagination</router-link>
           </div>
         </div>
       </div>
@@ -26,7 +27,7 @@ export default {
 </script>
 
 <style>
-/* I can add my global app tweaks here if needed */
+/* Global application background tweaks */
 body {
   background-color: #fafafa;
 }
